@@ -1,0 +1,22 @@
+{
+  "name": "mud-aws",
+  "version": "1.0.0",
+  "description": "mud-aws",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/motagota/mud-aws.git"
+  },
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/motagota/mud-aws/issues"
+  },
+  "homepage": "https://github.com/motagota/mud-aws#readme",
+  "dependencies": {
+    "express": "^4.21.2"
+  }
+}
