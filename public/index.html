@@ -21,11 +21,17 @@
           display: flex;
           align-items: center;
           gap: 5px;
+          width: 120px; /* Fixed width */
+          justify-content: center; /* Center content horizontally */
         }
   
         #connection-button.disconnected {
-          background-color: #dc3545;
-        }
+        background-color: #dc3545;
+      }
+
+      #connection-button.connecting {
+        background-color: #ffc107; /* Yellow for connecting state */
+      }
   
         #root {
           margin-top: 50px; /* Add some margin to avoid overlap with the button */
@@ -47,14 +53,20 @@
 
 // Track connection state
 let isConnected = false;
+let isConnecting = false;
 // Function to update button state
-      const updateButtonState = () => {
+const updateButtonState = () => {
         if (isConnected) {
           connectionButton.innerHTML = '<i class="fas fa-plug"></i> Disconnect';
+          connectionButton.classList.remove("disconnected", "connecting");
+        } else if (isConnecting) {
+          connectionButton.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Connecting';
+          connectionButton.classList.add("connecting");
           connectionButton.classList.remove("disconnected");
         } else {
           connectionButton.innerHTML = '<i class="fas fa-plug"></i> Connect';
           connectionButton.classList.add("disconnected");
+          connectionButton.classList.remove("connecting");
         }
       };
 
@@ -63,9 +75,11 @@ let isConnected = false;
         if (isConnected) {
           socket.disconnect(); // Disconnect from the server
           isConnected = false;
+          isConnecting = false;
         } else {
-          socket.connect(); // Connect to the server
-          isConnected = true;
+          isConnecting = true;
+          updateButtonState();
+          socket.connect(); // Attempt to connect to the server
         }
         updateButtonState();
       });
@@ -73,12 +87,21 @@ let isConnected = false;
       // Socket connection events
       socket.on("connect", () => {
         isConnected = true;
+        isConnecting = false;
         updateButtonState();
       });
 
       socket.on("disconnect", () => {
         isConnected = false;
+        isConnecting = false;
         updateButtonState();
+      });
+
+      socket.on("connect_error", () => {
+        isConnected = false;
+        isConnecting = false;
+        updateButtonState();
+        alert("Failed to connect to the server."); // Notify user of connection failure
       });
     </script>
   </body>
