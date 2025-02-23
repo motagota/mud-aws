@@ -4,9 +4,11 @@
   "description": "mud-aws",
   "main": "app.js",
   "scripts": {
-    "start": "node dist/index.js",
-    "dev": "nodemon src/index.ts",
-    "build": "tsc",
+    "start": "node dist/server.js",
+    "dev": "concurrently \"npm run build:server -- --watch\" \"npm run build:client -- --watch\"",
+    "build:server": "tsc -p tsconfig.json",
+    "build:client": "tsc -p tsconfig.client.json",
+    "build": "npm run build:server && npm run build:client",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "repository": {
@@ -36,6 +38,7 @@
   },
   "dependencies": {
     "aws-amplify": "^6.13.1",
-    "express": "^4.21.2"
+    "express": "^4.21.2",
+    "socket.io": "^4.8.1"
   }
 }
