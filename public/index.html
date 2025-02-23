@@ -4,8 +4,13 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Modern MUD Terminal</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.5.1/socket.io.min.js"></script>
   </head>
   <body>
     <div id="root">hello</div>
+
+    <script>
+      const socket = io("http://localhost:3000");
+    </script>
   </body>
 </html>
