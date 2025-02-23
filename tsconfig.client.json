@@ -1,15 +1,14 @@
 {
-    "extends": "./tsconfig.json",
-    "compilerOptions": {
-      "module": "ES6",
-      "target": "ES6",
-      "outDir": "./public/scripts",
-      "noEmitOnError": true,
-      "lib": ["ES6", "DOM"],
-      "rootDir": "./public/scripts",
-      "baseUrl": "."
-    },
-    "include": ["public/scripts/**/*.ts"],
-    "exclude": ["node_modules", "dist", "src"]
-  }
-  
+  "extends": "./tsconfig.json",
+  "compilerOptions": {
+    "module": "ES6",
+    "target": "ES6",
+    "outDir": "./public/scripts",
+    "noEmitOnError": true,
+    "lib": ["ES6", "DOM"],
+    "rootDir": "./public/scripts",
+    "baseUrl": "."
+  },
+  "include": ["public/scripts/**/*.ts"],
+  "exclude": ["node_modules", "dist", "src"]
+}

@@ -5,104 +5,430 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Modern MUD Terminal</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.5.1/socket.io.min.js"></script>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css"
+    />
     <style>
-        /* Basic styling for the button */
-        #connection-button {
-          position: fixed;
-          top: 10px;
-          right: 10px;
-          padding: 10px;
-          background-color: #007bff;
-          color: white;
-          border: none;
-          border-radius: 5px;
-          cursor: pointer;
-          display: flex;
-          align-items: center;
-          gap: 5px;
-          width: 120px; /* Fixed width */
-          justify-content: center; /* Center content horizontally */
-        }
-  
-        #connection-button.disconnected {
+      /* Basic styling for the button */
+      #connection-button {
+        position: fixed;
+        top: 10px;
+        right: 10px;
+        padding: 10px;
+        background-color: #007bff;
+        color: white;
+        border: none;
+        border-radius: 5px;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        gap: 5px;
+        width: 120px; /* Fixed width */
+        justify-content: center; /* Center content horizontally */
+      }
+
+      #connection-button.disconnected {
         background-color: #dc3545;
       }
 
       #connection-button.connecting {
         background-color: #ffc107; /* Yellow for connecting state */
       }
-  
-        #root {
-          margin-top: 50px; /* Add some margin to avoid overlap with the button */
-        }
-      </style>
 
+      #root {
+        margin-top: 50px; /* Add some margin to avoid overlap with the button */
+      } /* Custom Terminal Styles */
+
+      :root {
+        --terminal-bg: #1a1a1a;
+        --terminal-text: #33ff00;
+        --terminal-cursor: #33ff00;
+        --terminal-prompt: #ff9933;
+        --terminal-font: "Cascadia Code", "Fira Code", "Courier New", monospace;
+      }
+
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+
+      body {
+        background-color: var(--terminal-bg);
+        color: var(--terminal-text);
+        font-family: var(--terminal-font);
+        height: 100vh;
+        display: flex;
+        flex-direction: column;
+      }
+
+      #terminal {
+        flex-grow: 1;
+        overflow-y: auto;
+        padding: 1rem;
+        white-space: pre-wrap;
+        word-wrap: break-word;
+      }
+
+      .message {
+        margin-bottom: 0.5rem;
+        line-height: 1.4;
+      }
+
+      .input-area {
+        display: flex;
+        padding: 1rem;
+        background-color: rgba(0, 0, 0, 0.3);
+        border-top: 1px solid #333;
+      }
+
+      .prompt {
+        color: var(--terminal-prompt);
+        margin-right: 0.5rem;
+      }
+
+      #command-input {
+        flex-grow: 1;
+        background-color: transparent;
+        border: none;
+        color: var(--terminal-text);
+        font-family: var(--terminal-font);
+        font-size: 1rem;
+        outline: none;
+      }
+
+      /* Pastel ANSI Colors */
+      .ansi-black {
+        color: #4a4a4a;
+      } /* Soft Black (Dark Gray) */
+      .ansi-red {
+        color: #ff7f7f;
+      } /* Pastel Red */
+      .ansi-green {
+        color: #7fff7f;
+      } /* Pastel Green */
+      .ansi-yellow {
+        color: #ffff7f;
+      } /* Pastel Yellow */
+      .ansi-blue {
+        color: #7f7fff;
+      } /* Pastel Blue */
+      .ansi-magenta {
+        color: #ff7fff;
+      } /* Pastel Magenta */
+      .ansi-cyan {
+        color: #7fffff;
+      } /* Pastel Cyan */
+      .ansi-white {
+        color: #f0f0f0;
+      } /* Soft White (Light Gray) */
+
+      /* Bright Pastel ANSI Colors */
+      .ansi-bright-black {
+        color: #808080;
+      } /* Bright Black (Gray) */
+      .ansi-bright-red {
+        color: #ffaaaa;
+      } /* Light Pastel Red */
+      .ansi-bright-green {
+        color: #aaffaa;
+      } /* Light Pastel Green */
+      .ansi-bright-yellow {
+        color: #ffffaa;
+      } /* Light Pastel Yellow */
+      .ansi-bright-blue {
+        color: #aaaaff;
+      } /* Light Pastel Blue */
+      .ansi-bright-magenta {
+        color: #ffaaff;
+      } /* Light Pastel Magenta */
+      .ansi-bright-cyan {
+        color: #aaffff;
+      } /* Light Pastel Cyan */
+      .ansi-bright-white {
+        color: #ffffff;
+      } /* Bright White */
+      .dimmed-text {
+        filter: brightness(0.5);
+      }
+    </style>
   </head>
   <body>
-     <!-- Connection button -->
-     <button id="connection-button">
-        <i class="fas fa-plug"></i> Connect
-      </button>
-
-    <div id="root">hello</div>
+    <!-- Connection button -->
+    <button id="connection-button"><i class="fas fa-plug"></i> Connect</button>
+    <div id="terminal"></div>
+    <div class="input-area">
+      <span class="prompt">&gt;</span>
+      <input
+        type="text"
+        id="command-input"
+        autocomplete="off"
+        spellcheck="false"
+      />
+    </div>
 
     <script>
-      const socket = io("http://localhost:3030");
-      const connectionButton = document.getElementById("connection-button");
-
-// Track connection state
-let isConnected = false;
-let isConnecting = false;
-// Function to update button state
-const updateButtonState = () => {
-        if (isConnected) {
-          connectionButton.innerHTML = '<i class="fas fa-plug"></i> Disconnect';
-          connectionButton.classList.remove("disconnected", "connecting");
-        } else if (isConnecting) {
-          connectionButton.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Connecting';
-          connectionButton.classList.add("connecting");
-          connectionButton.classList.remove("disconnected");
-        } else {
-          connectionButton.innerHTML = '<i class="fas fa-plug"></i> Connect';
-          connectionButton.classList.add("disconnected");
-          connectionButton.classList.remove("connecting");
-        }
+      // Improved constants and state management
+      const config = {
+        serverUrl: "http://localhost:3030",
+        maxHistory: 100,
+        prompt: ">",
+        initialMessage: "\x1b[36mWelcome to the MUD terminal!\x1b[0m",
+      };
+      const state = {
+        connected: false,
+        connecting: false,
+        commandHistory: [],
+        historyIndex: -1,
+      };
+      const elements = {
+        connectionButton: document.getElementById("connection-button"),
+        terminal: document.getElementById("terminal"),
+        input: document.getElementById("command-input"),
       };
 
-      // Handle button click
-      connectionButton.addEventListener("click", () => {
-        if (isConnected) {
-          socket.disconnect(); // Disconnect from the server
-          isConnected = false;
-          isConnecting = false;
-        } else {
-          isConnecting = true;
-          updateButtonState();
-          socket.connect(); // Attempt to connect to the server
-        }
-        updateButtonState();
+      const socket = io(config.serverUrl, {
+        reconnection: false,
+        autoConnect: false,
+        transports: ["websocket"],
       });
+
+      // Track connection state
+      let isConnected = false;
+      let isConnecting = false;
+      // Function to update button state
+      const updateButtonState = () => {
+        if (isConnected) {
+          elements.connectionButton.innerHTML =
+            '<i class="fas fa-plug"></i> Disconnect';
+          elements.connectionButton.classList.remove(
+            "disconnected",
+            "connecting"
+          );
+        } else if (isConnecting) {
+          elements.connectionButton.innerHTML =
+            '<i class="fas fa-spinner fa-spin"></i> Connecting';
+          elements.connectionButton.classList.add("connecting");
+          elements.connectionButton.classList.remove("disconnected");
+        } else {
+          elements.connectionButton.innerHTML =
+            '<i class="fas fa-plug"></i> Connect';
+          elements.connectionButton.classList.add("disconnected");
+          elements.connectionButton.classList.remove("connecting");
+        }
+      };
+      const command = {
+        history: [],
+
+        send(cmd) {
+          if (!cmd.trim()) return;
+
+          terminal.addMessage(`${config.prompt} ${cmd}`, "sent-command");
+          socket.emit("command", cmd);
+          this.history.push(cmd);
+          elements.input.value = "";
+        },
+
+        recallHistory(direction) {
+          if (direction === "up") {
+            state.historyIndex = Math.min(
+              state.historyIndex + 1,
+              this.history.length - 1
+            );
+          } else {
+            state.historyIndex = Math.max(state.historyIndex - 1, -1);
+          }
+
+          elements.input.value = this.history[state.historyIndex] || "";
+        },
+      };
+      elements.input.addEventListener("keydown", (e) => {
+        if (e.key === "Enter") {
+          command.send(elements.input.value);
+        } else if (e.key === "ArrowUp") {
+          command.recallHistory("up");
+        } else if (e.key === "ArrowDown") {
+          command.recallHistory("down");
+        }
+      });
+
+      elements.connectionButton.addEventListener("click", () => {
+        state.connected ? connection.disconnect() : connection.connect();
+      });
+
+      function processCustomeTags(text) {
+        const tags = {
+          "<dim>": `<span class="dimmed-text">`,
+          "</dim>": `</span>`,
+          "<newline/>": "<br>",
+          "<bold>": "<strong>",
+          "</bold>": "</strong>",
+          "<b>": "font-weight: bold;",
+          "</b>": "font-weight: normal;",
+          "<i>": "font-style: italic;",
+          "</i>": "font-style: normal;",
+          "<u>": "text-decoration: underline;",
+          "</u>": "text-decoration: none;",
+          "<s>": "text-decoration: line-through;",
+          "</s>": "text-decoration: none;",
+          "<red>": '<span class="ansi-red">',
+          "</red>": "</span>",
+          "<green>": '<span class="ansi-green">',
+          "</green>": "</span>",
+          "<blue>": "color: blue;",
+          "</blue>": "color: inherit;",
+          "<yellow>": '<span class="ansi-yellow">',
+          "</yellow>": "</span>",
+          "<magenta>": '<span class="ansi-magenta">',
+          "</magenta>": "</span>",
+          "<cyan>": '<span class="ansi-cyan">',
+          "</cyan>": "</span>",
+          "<white>": '<span class="ansi-white">',
+          "</white>": "</span>",
+          "<black>": "color: black;",
+          "</black>": "color: inherit;",
+          "<gray>": "color: gray;",
+          "</gray>": "color: inherit;",
+          "<bg-red>": "background-color: red;",
+          "</bg-red>": "background-color: inherit;",
+          "<bg-green>": "background-color: green;",
+          "</bg-green>": "background-color: inherit;",
+          "<bg-blue>": "background-color: blue;",
+          "</bg-blue>": "background-color: inherit;",
+          "<bg-yellow>": "background-color: yellow;",
+          "</bg-yellow>": "background-color: inherit;",
+          "<bg-magenta>": "background-color: magenta;",
+          "</bg-magenta>": "background-color: inherit;",
+          "<bg-cyan>": "background-color: cyan;",
+          "</bg-cyan>": "background-color: inherit;",
+          "<bg-white>": "background-color: white;",
+          "</bg-white>": "background-color: inherit;",
+          "<bg-black>": "background-color: black;",
+          "</bg-black>": "background-color: inherit;",
+          "<bg-gray>": "background-color: gray;",
+          "</bg-gray>": "background-color: inherit;",
+        };
+
+        text = text.replace(
+          /<newline\/>|<bold>|<\/bold>|<dim>|<\/dim>|<b>|<\/b>|<i>|<\/i>|<u>|<\/u>|<s>|<\/s>|<red>|<\/red>|<green>|<\/green>|<blue>|<\/blue>|<yellow>|<\/yellow>|<magenta>|<\/magenta>|<cyan>|<\/cyan>|<white>|<\/white>|<black>|<\/black>|<gray>|<\/gray>|<bg-red>|<\/bg-red>|<bg-green>|<\/bg-green>|<bg-blue>|<\/bg-blue>|<bg-yellow>|<\/bg-yellow>|<bg-magenta>|<\/bg-magenta>|<bg-cyan>|<\/bg-cyan>|<bg-white>|<\/bg-white>|<bg-black>|<\/bg-black>|<bg-gray>|<\/bg-gray>/g,
+          (tag) => tags[tag]
+        );
+        return text;
+      }
+      // ANSI escape code processing
+      function processANSI(text) {
+        text = processCustomeTags(text);
+        const colorMap = {
+          30: "ansi-black",
+          31: "ansi-red",
+          32: "ansi-green",
+          33: "ansi-yellow",
+          34: "ansi-blue",
+          35: "ansi-magenta",
+          36: "ansi-cyan",
+          37: "ansi-white",
+          90: "ansi-bright-black",
+          91: "ansi-bright-red",
+          92: "ansi-bright-green",
+          93: "ansi-bright-yellow",
+          94: "ansi-bright-blue",
+          95: "ansi-bright-magenta",
+          96: "ansi-bright-cyan",
+          97: "ansi-bright-white",
+        };
+
+        const parts = text.split(/\x1b\[([0-9;]*)m/);
+        let html = "";
+        let currentSpan = false;
+
+        for (let i = 0; i < parts.length; i++) {
+          if (i % 2 === 0) {
+            // Text content
+            html += parts[i];
+          } else {
+            // Color code
+            if (parts[i] === "0") {
+              if (currentSpan) {
+                html += "</span>";
+                currentSpan = false;
+              }
+            } else {
+              const colorCode = colorMap[parts[i]];
+              if (colorCode) {
+                if (currentSpan) html += "</span>";
+                html += `<span class="${colorCode}">`;
+                currentSpan = true;
+              }
+            }
+          }
+        }
+
+        if (currentSpan) html += "</span>";
+        return html;
+      }
+      const terminal = {
+        addMessage(text, className = "") {
+          const msg = document.createElement("div");
+          msg.className = "message";
+          msg.innerHTML = processANSI(text);
+          elements.terminal.appendChild(msg);
+          if (elements.terminal.childElementCount > config.maxHistory) {
+            elements.terminal.removeChild(elements.terminal.firstChild);
+          }
+
+          elements.terminal.scrollTop = elements.terminal.scrollHeight;
+        },
+
+        addStatusMessage(text) {
+          this.addMessage(
+            `[${new Date().toLocaleTimeString()}] ${text}`,
+            "status-message"
+          );
+        },
+
+        addErrorMessage(text) {
+          this.addMessage(`! ${text}`, "error-message");
+        },
+      };
+
+      const connection = {
+        connect() {
+          state.connecting = true;
+          socket.connect();
+          updateButtonState();
+          terminal.addStatusMessage("Connecting to server...");
+        },
+
+        disconnect() {
+          socket.disconnect();
+          terminal.addStatusMessage("Disconnected");
+        },
+
+        handleError(err) {
+          terminal.addErrorMessage(`Connection failed: ${err.message}`);
+          state.connected = false;
+          state.connecting = false;
+          updateButtonState();
+        },
+      };
 
       // Socket connection events
-      socket.on("connect", () => {
-        isConnected = true;
-        isConnecting = false;
-        updateButtonState();
-      });
+      socket
+        .on("connect", () => {
+          state.connected = true;
+          state.connecting = false;
+          updateButtonState();
+          terminal.addStatusMessage("Connected to server");
+        })
+        .on("disconnect", () => {
+          state.connected = false;
+          updateButtonState();
+        })
+        .on("connect_error", connection.handleError)
+        .on("message", (msg) => terminal.addMessage(msg));
 
-      socket.on("disconnect", () => {
-        isConnected = false;
-        isConnecting = false;
-        updateButtonState();
-      });
-
-      socket.on("connect_error", () => {
-        isConnected = false;
-        isConnecting = false;
-        updateButtonState();
-        alert("Failed to connect to the server."); // Notify user of connection failure
-      });
+      terminal.addMessage(config.initialMessage);
     </script>
   </body>
 </html>
