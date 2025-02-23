@@ -5,12 +5,81 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Modern MUD Terminal</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.5.1/socket.io.min.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <style>
+        /* Basic styling for the button */
+        #connection-button {
+          position: fixed;
+          top: 10px;
+          right: 10px;
+          padding: 10px;
+          background-color: #007bff;
+          color: white;
+          border: none;
+          border-radius: 5px;
+          cursor: pointer;
+          display: flex;
+          align-items: center;
+          gap: 5px;
+        }
+  
+        #connection-button.disconnected {
+          background-color: #dc3545;
+        }
+  
+        #root {
+          margin-top: 50px; /* Add some margin to avoid overlap with the button */
+        }
+      </style>
+
   </head>
   <body>
+     <!-- Connection button -->
+     <button id="connection-button">
+        <i class="fas fa-plug"></i> Connect
+      </button>
+
     <div id="root">hello</div>
 
     <script>
-      const socket = io("http://localhost:3000");
+      const socket = io("http://localhost:3030");
+      const connectionButton = document.getElementById("connection-button");
+
+// Track connection state
+let isConnected = false;
+// Function to update button state
+      const updateButtonState = () => {
+        if (isConnected) {
+          connectionButton.innerHTML = '<i class="fas fa-plug"></i> Disconnect';
+          connectionButton.classList.remove("disconnected");
+        } else {
+          connectionButton.innerHTML = '<i class="fas fa-plug"></i> Connect';
+          connectionButton.classList.add("disconnected");
+        }
+      };
+
+      // Handle button click
+      connectionButton.addEventListener("click", () => {
+        if (isConnected) {
+          socket.disconnect(); // Disconnect from the server
+          isConnected = false;
+        } else {
+          socket.connect(); // Connect to the server
+          isConnected = true;
+        }
+        updateButtonState();
+      });
+
+      // Socket connection events
+      socket.on("connect", () => {
+        isConnected = true;
+        updateButtonState();
+      });
+
+      socket.on("disconnect", () => {
+        isConnected = false;
+        updateButtonState();
+      });
     </script>
   </body>
 </html>
