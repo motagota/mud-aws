@@ -171,8 +171,7 @@
     <script>
       // Improved constants and state management
       const config = {
-        serverUrl:
-          "${window.location.protocol}//${window.location.hostname}:3030",
+        serverUrl: `ws://${window.location.hostname}:3030`,
         maxHistory: 100,
         prompt: ">",
         initialMessage: "\x1b[36mWelcome to the MUD terminal!\x1b[0m",
