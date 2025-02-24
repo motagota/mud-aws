@@ -2,6 +2,11 @@
 Object.defineProperty(exports, "__esModule", { value: true });
 const player_1 = require("./player");
 class PlayerManager {
+    static logoutAll() {
+        Array.from(this._players.values()).forEach((player) => {
+            player.loggedIn = false;
+        });
+    }
     static getPlayers() {
         return this.players;
     }

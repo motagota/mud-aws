@@ -31,7 +31,40 @@ io.on("connection", (socket) => {
         playerManager_1.default.removePlayer(socket.id);
     });
 });
+// clean up orphaned characters, if the server crashed or something went wrong we need to reset them all on start up
+const checkOrphanedCharacters = async () => {
+    try {
+        //const result = await Character.updateMany(
+        //  { loggedIn: true },
+        //  { $set: { loggedIn: false } }
+        // );
+        //console.log(`Cleaned up ${result.modifiedCount} orphaned characters`);
+    }
+    catch (error) {
+        console.error("Crash recovery failed:", error);
+    }
+};
+//mongoose.connection.once('open', () => {
+//  checkOrphanedCharacters();
+//});
 const PORT = process.env.PORT || 3030;
 http.listen(PORT, () => {
     console.log(`MUD Server running on port ${PORT}`);
 });
+// Add to server.js
+const cleanupAndExit = async () => {
+    console.log("Starting cleanup...");
+    try {
+        // Mark all logged-in characters as offline
+        await playerManager_1.default.logoutAll();
+        console.log("All characters logged out");
+        process.exit(0);
+    }
+    catch (error) {
+        console.error("Cleanup failed:", error);
+        process.exit(1);
+    }
+};
+// Handle graceful shutdowns
+process.on("SIGINT", cleanupAndExit);
+process.on("SIGTERM", cleanupAndExit);

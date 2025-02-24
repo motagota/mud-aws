@@ -33,7 +33,7 @@ export class SCLogonHandler implements IHandler {
     [key: string]: (data: string) => Promise<void>;
   } = {
     [NEWCONNECTION]: this.handleNewConnection.bind(this),
-    //   [NEWUSER]: this.handleNewUser.bind(this),
+    [NEWUSER]: this.handleNewUser.bind(this),
     //   [ENTERNEWPASS]: this.handleEnterNewPass.bind(this),
     //    [ENTERPASS]: this.handleEnterPass.bind(this),
   };
@@ -82,16 +82,17 @@ export class SCLogonHandler implements IHandler {
 
   private async handleNewConnection(data: string) {
     if (data.toLowerCase() === "new") {
-      this.setState(
-        NEWUSER,
-        "Not ready to create new users yet",
-        colors.yellow
-      );
-      //this.setState(NEWUSER, "Please enter your desired name: ", colors.yellow);
+      this.setState(NEWUSER, "Please enter your desired name: ", colors.yellow);
       return;
     }
   }
 
+  private async handleNewUser(data: string) {
+    try {
+    } catch (error) {
+      this.sendError("Error processing username. Please try again.");
+    }
+  }
   SetHandler(handler: IHandler): void {
     throw new Error("Method not implemented.");
   }
@@ -104,5 +105,9 @@ export class SCLogonHandler implements IHandler {
 
   public sendMessage(color: string, text: string) {
     this.m_connection.emit("message", `${color}${text}${color}`);
+  }
+
+  private sendError(text: string) {
+    this.sendMessage(colors.error, text);
   }
 }

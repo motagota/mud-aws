@@ -5,6 +5,12 @@ class PlayerManager {
   private static players: { [key: string]: IHandler } = {};
   private static _players: Map<string, Player> = new Map();
 
+  static logoutAll() {
+    Array.from(this._players.values()).forEach((player) => {
+      player.loggedIn = false;
+    });
+  }
+
   static getPlayers() {
     return this.players;
   }

@@ -63,7 +63,8 @@ class SCLogonHandler {
     }
     async handleNewConnection(data) {
         if (data.toLowerCase() === "new") {
-            this.setState(NEWUSER, "Please enter your desired name: ", colors.yellow);
+            this.setState(NEWUSER, "Not ready to create new users yet", colors.yellow);
+            //this.setState(NEWUSER, "Please enter your desired name: ", colors.yellow);
             return;
         }
     }
