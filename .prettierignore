@@ -1,0 +1,13 @@
+# Ignore specific files
+
+file-to-ignore.js
+*.html
+
+# Ignore directories
+
+dist/
+temp/
+
+# Ignore minified files
+
+\*_/_.min.css
