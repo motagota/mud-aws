@@ -25,7 +25,7 @@ class SCLogonHandler {
         };
         this.stateHandlers = {
             [NEWCONNECTION]: this.handleNewConnection.bind(this),
-            //   [NEWUSER]: this.handleNewUser.bind(this),
+            [NEWUSER]: this.handleNewUser.bind(this),
             //   [ENTERNEWPASS]: this.handleEnterNewPass.bind(this),
             //    [ENTERPASS]: this.handleEnterPass.bind(this),
         };
@@ -63,9 +63,15 @@ class SCLogonHandler {
     }
     async handleNewConnection(data) {
         if (data.toLowerCase() === "new") {
-            this.setState(NEWUSER, "Not ready to create new users yet", colors.yellow);
-            //this.setState(NEWUSER, "Please enter your desired name: ", colors.yellow);
+            this.setState(NEWUSER, "Please enter your desired name: ", colors.yellow);
             return;
+        }
+    }
+    async handleNewUser(data) {
+        try {
+        }
+        catch (error) {
+            this.sendError("Error processing username. Please try again.");
         }
     }
     SetHandler(handler) {
@@ -78,6 +84,9 @@ class SCLogonHandler {
     }
     sendMessage(color, text) {
         this.m_connection.emit("message", `${color}${text}${color}`);
+    }
+    sendError(text) {
+        this.sendMessage(colors.error, text);
     }
 }
 exports.SCLogonHandler = SCLogonHandler;

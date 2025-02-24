@@ -9,6 +9,9 @@ const socket_io_1 = require("socket.io");
 const path_1 = __importDefault(require("path"));
 const handler_logon_1 = require("./scripts/handler.logon");
 const playerManager_1 = __importDefault(require("./scripts/playerManager"));
+const { User, Character } = require("./scripts/charcter.document");
+const mongoose = require("mongoose");
+const mongoURI = "mongodb://localhost:27017/JES_MUD";
 const app = (0, express_1.default)();
 const http = (0, http_1.createServer)(app);
 const io = new socket_io_1.Server(http, {
@@ -34,19 +37,20 @@ io.on("connection", (socket) => {
 // clean up orphaned characters, if the server crashed or something went wrong we need to reset them all on start up
 const checkOrphanedCharacters = async () => {
     try {
-        //const result = await Character.updateMany(
-        //  { loggedIn: true },
-        //  { $set: { loggedIn: false } }
-        // );
-        //console.log(`Cleaned up ${result.modifiedCount} orphaned characters`);
+        const result = await Character.updateMany({ loggedIn: true }, { $set: { loggedIn: false } });
+        console.log(`Cleaned up ${result.modifiedCount} orphaned characters`);
     }
     catch (error) {
         console.error("Crash recovery failed:", error);
     }
 };
-//mongoose.connection.once('open', () => {
-//  checkOrphanedCharacters();
-//});
+mongoose.connect(mongoURI, {
+    useNewUrlParser: true,
+    useUnifiedTopology: true,
+});
+mongoose.connection.once("open", () => {
+    checkOrphanedCharacters();
+});
 const PORT = process.env.PORT || 3030;
 http.listen(PORT, () => {
     console.log(`MUD Server running on port ${PORT}`);

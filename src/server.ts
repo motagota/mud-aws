@@ -4,6 +4,8 @@ import { Server, Socket } from "socket.io";
 import path from "path";
 import { SCLogonHandler } from "./scripts/handler.logon";
 import PlayerManager from "./scripts/playerManager";
+const { User, Character } = require("./scripts/charcter.document");
+
 const mongoose = require("mongoose");
 const mongoURI = "mongodb://localhost:27017/JES_MUD";
 
@@ -37,11 +39,11 @@ io.on("connection", (socket: Socket) => {
 // clean up orphaned characters, if the server crashed or something went wrong we need to reset them all on start up
 const checkOrphanedCharacters = async () => {
   try {
-    //const result = await Character.updateMany(
-    //  { loggedIn: true },
-    //  { $set: { loggedIn: false } }
-    // );
-    //console.log(`Cleaned up ${result.modifiedCount} orphaned characters`);
+    const result = await Character.updateMany(
+      { loggedIn: true },
+      { $set: { loggedIn: false } }
+    );
+    console.log(`Cleaned up ${result.modifiedCount} orphaned characters`);
   } catch (error) {
     console.error("Crash recovery failed:", error);
   }
